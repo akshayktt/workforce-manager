@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "WorkForce",
-    "slug": "workforce",
+    "slug": "workforce-manager",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.myapp"
+      "bundleIdentifier": "com.myapp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.myapp",
@@ -42,6 +45,15 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": "https://replit.com/"
+      },
+      "eas": {
+        "projectId": "e9b1c57b-1406-4c91-87ac-a33e7ce0920c"
+      }
+    },
+    "owner": "akshayktt"
   }
 }
