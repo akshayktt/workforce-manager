@@ -82,10 +82,18 @@ function prepareDirectories(timestamp) {
 function clearMetroCache() {
   console.log("Clearing Metro cache...");
 
-  const cacheDirs = [
-    ...fs.globSync(".metro-cache"),
-    ...fs.globSync("node_modules/.cache/metro"),
-  ];
+  const cacheDirs = [];
+  
+  // Check for .metro-cache directory
+  if (fs.existsSync(".metro-cache")) {
+    cacheDirs.push(".metro-cache");
+  }
+  
+  // Check for node_modules/.cache/metro directory
+  const metroCachePath = path.join("node_modules", ".cache", "metro");
+  if (fs.existsSync(metroCachePath)) {
+    cacheDirs.push(metroCachePath);
+  }
 
   for (const dir of cacheDirs) {
     fs.rmSync(dir, { recursive: true, force: true });
