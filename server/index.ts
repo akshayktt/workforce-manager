@@ -18,14 +18,24 @@ function setupCors(app: express.Application) {
   app.use((req, res, next) => {
     const origins = new Set<string>();
 
+    // 1) Explicitly configured allowed origins (comma-separated)
+    if (process.env.ALLOWED_ORIGINS) {
+      process.env.ALLOWED_ORIGINS.split(",")
+        .map((d) => d.trim())
+        .filter(Boolean)
+        .forEach((d) => origins.add(d));
+    }
+
+    // 2) Replit-specific domains (kept for dev convenience)
     if (process.env.REPLIT_DEV_DOMAIN) {
       origins.add(`https://${process.env.REPLIT_DEV_DOMAIN}`);
     }
 
     if (process.env.REPLIT_DOMAINS) {
-      process.env.REPLIT_DOMAINS.split(",").forEach((d) => {
-        origins.add(`https://${d.trim()}`);
-      });
+      process.env.REPLIT_DOMAINS.split(",")
+        .map((d) => d.trim())
+        .filter(Boolean)
+        .forEach((d) => origins.add(`https://${d}`));
     }
 
     const origin = req.header("origin");
@@ -35,13 +45,19 @@ function setupCors(app: express.Application) {
       origin?.startsWith("http://localhost:") ||
       origin?.startsWith("http://127.0.0.1:");
 
-    if (origin && (origins.has(origin) || isLocalhost)) {
+    // Allow Expo hosted apps (*.expo.app) by default
+    const isExpoHosted = origin?.endsWith(".expo.app") ?? false;
+
+    if (origin && (origins.has(origin) || isLocalhost || isExpoHosted)) {
       res.header("Access-Control-Allow-Origin", origin);
       res.header(
         "Access-Control-Allow-Methods",
         "GET, POST, PUT, PATCH, DELETE, OPTIONS",
       );
-      res.header("Access-Control-Allow-Headers", "Content-Type, Cookie");
+      res.header(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Cookie, Authorization, X-Requested-With",
+      );
       res.header("Access-Control-Allow-Credentials", "true");
     }
 
