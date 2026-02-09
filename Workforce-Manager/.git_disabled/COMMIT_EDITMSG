@@ -1,0 +1,10 @@
+Add functionality to find labor availability and retrieve scheduled date ranges
+
+Update the IStorage interface to include methods for `getNextAvailableDate` and `getLaborScheduledRanges`.
+
+Replit-Commit-Author: Agent
+Replit-Commit-Session-Id: 813a6093-6ef1-440a-bef4-880c5583e362
+Replit-Commit-Checkpoint-Type: full_checkpoint
+Replit-Commit-Event-Id: 200f679a-1400-46ca-a514-92adfd890e2d
+Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/3dbb3678-9c93-45ef-95db-807f98ac09f4/813a6093-6ef1-440a-bef4-880c5583e362/D74Evpj
+Replit-Helium-Checkpoint-Created: true
