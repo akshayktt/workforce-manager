@@ -2,11 +2,13 @@ import "dotenv/config";
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { getConfig } from "./config";
 import * as fs from "fs";
 import * as path from "path";
 
 const app = express();
 const log = console.log;
+const config = getConfig();
 
 declare module "http" {
   interface IncomingMessage {
@@ -17,6 +19,9 @@ declare module "http" {
 function setupCors(app: express.Application) {
   app.use((req, res, next) => {
     const origins = new Set<string>();
+
+    // Add configured allowed origins
+    config.allowedOrigins.forEach(origin => origins.add(origin));
 
     // 1) Explicitly configured allowed origins (comma-separated)
     if (process.env.ALLOWED_ORIGINS) {
@@ -261,7 +266,7 @@ function setupErrorHandler(app: express.Application) {
 
     setupErrorHandler(app);
 
-    const port = parseInt(process.env.PORT || "5000", 10);
+    const port = config.port;
     server.on("error", (error: NodeJS.ErrnoException) => {
       if (error.code === "EADDRINUSE") {
         console.error(`Port ${port} is already in use`);
@@ -272,7 +277,7 @@ function setupErrorHandler(app: express.Application) {
     });
 
     server.listen(port, "0.0.0.0", () => {
-      log(`express server serving on port ${port}`);
+      log(`express server serving on port ${port} in ${process.env.NODE_ENV || 'development'} mode`);
     });
   } catch (err) {
     console.error("Fatal error starting server:", err);

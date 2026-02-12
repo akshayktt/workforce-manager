@@ -27,15 +27,25 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
+    console.log('[Login] Auth state changed - user:', user?.username, 'role:', user?.role, 'authLoading:', authLoading);
     if (user && !authLoading) {
+      console.log('[Login] User authenticated, navigating by role:', user.role);
       navigateByRole(user.role);
     }
   }, [user, authLoading]);
 
   function navigateByRole(role: string) {
-    if (role === "admin") router.replace("/admin");
-    else if (role === "supervisor") router.replace("/supervisor");
-    else router.replace("/labor");
+    console.log('[Login] Navigating by role:', role);
+    if (role === "admin") {
+      console.log('[Login] Redirecting to /admin');
+      router.replace("/admin");
+    } else if (role === "supervisor") {
+      console.log('[Login] Redirecting to /supervisor');
+      router.replace("/supervisor");
+    } else {
+      console.log('[Login] Redirecting to /labor');
+      router.replace("/labor");
+    }
   }
 
   async function handleLogin() {
@@ -44,17 +54,25 @@ export default function LoginScreen() {
       return;
     }
 
+    console.log('[LoginUI] Starting login for username:', username.trim());
     setIsLoading(true);
     setError("");
 
     try {
+      console.log('[LoginUI] Calling auth.login()');
       await login(username.trim(), password.trim());
+      console.log('[LoginUI] Login completed successfully');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e: any) {
-      setError(e.message?.includes("401") ? "Invalid credentials" : "Login failed. Please try again.");
+      console.error('[LoginUI] Login failed:', e);
+      console.error('[LoginUI] Error message:', e.message);
+      const errorMsg = e.message?.includes("401") ? "Invalid credentials" : "Login failed. Please try again.";
+      console.log('[LoginUI] Setting error message:', errorMsg);
+      setError(errorMsg);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setIsLoading(false);
+      console.log('[LoginUI] Login process finished');
     }
   }
 
@@ -155,9 +173,9 @@ export default function LoginScreen() {
           <View style={styles.demoSection}>
             <Text style={styles.demoTitle}>Demo Accounts</Text>
             <View style={styles.demoGrid}>
-              <DemoChip label="Admin" username="admin" password="admin123" onPress={(u, p) => { setUsername(u); setPassword(p); }} />
-              <DemoChip label="Supervisor" username="supervisor1" password="super123" onPress={(u, p) => { setUsername(u); setPassword(p); }} />
-              <DemoChip label="Labor" username="labor1" password="labor123" onPress={(u, p) => { setUsername(u); setPassword(p); }} />
+              <DemoChip label="Admin" username="admin" password="password123" onPress={(u, p) => { setUsername(u); setPassword(p); }} />
+              <DemoChip label="Supervisor" username="supervisor1" password="password123" onPress={(u, p) => { setUsername(u); setPassword(p); }} />
+              <DemoChip label="Labor" username="labor1" password="password123" onPress={(u, p) => { setUsername(u); setPassword(p); }} />
             </View>
           </View>
         </View>

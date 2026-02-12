@@ -5,9 +5,11 @@ import connectPgSimple from "connect-pg-simple";
 import pg from "pg";
 import bcrypt from "bcryptjs";
 import { storage, seedDatabase } from "./storage";
+import { getConfig } from "./config";
 import type { LaborRequest } from "@/shared/schema";
 
 const PgSession = connectPgSimple(session);
+const config = getConfig();
 
 declare module "express-session" {
   interface SessionData {
@@ -54,7 +56,7 @@ function requireRole(...roles: string[]) {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: config.databaseUrl,
   });
 
   app.use(
@@ -63,7 +65,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pool,
         createTableIfMissing: true,
       }),
-      secret: process.env.SESSION_SECRET || "workforce-secret-key",
+      secret: config.sessionSecret,
       resave: false,
       saveUninitialized: false,
       cookie: {

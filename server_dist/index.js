@@ -64,8 +64,38 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { eq, and, or, lte, gte, ne, ilike, sql as sql2 } from "drizzle-orm";
 import pg from "pg";
 import bcrypt from "bcryptjs";
+
+// server/config.ts
+var config = {
+  development: {
+    port: 4e3,
+    databaseUrl: "postgresql://neondb_owner:npg_I7V8ULHZNEde@ep-patient-dust-air2gcev-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=verify-full",
+    sessionSecret: "workforce-secret-dev",
+    allowedOrigins: [
+      "http://localhost:8081",
+      "http://localhost:4000",
+      "http://localhost:3000",
+      "http://localhost:19006",
+      "http://127.0.0.1:4000",
+      "http://127.0.0.1:8081"
+    ]
+  },
+  production: {
+    port: parseInt(process.env.PORT || "5000", 10),
+    databaseUrl: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_I7V8ULHZNEde@ep-patient-dust-air2gcev-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=verify-full",
+    sessionSecret: process.env.SESSION_SECRET || "workforce-secret-prod-change-me",
+    allowedOrigins: process.env.ALLOWED_ORIGINS?.split(",") || []
+  }
+};
+function getConfig() {
+  const env = process.env.NODE_ENV || "development";
+  return config[env] || config.development;
+}
+
+// server/storage.ts
+var config2 = getConfig();
 var pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL
+  connectionString: config2.databaseUrl
 });
 var db = drizzle(pool);
 var DatabaseStorage = class {
@@ -230,6 +260,7 @@ async function seedDatabase() {
 
 // server/routes.ts
 var PgSession = connectPgSimple(session);
+var config3 = getConfig();
 function deduplicateRequests(requests) {
   const seen = /* @__PURE__ */ new Set();
   return requests.filter((request) => {
@@ -261,7 +292,7 @@ function requireRole(...roles) {
 }
 async function registerRoutes(app2) {
   const pool2 = new pg2.Pool({
-    connectionString: process.env.DATABASE_URL
+    connectionString: config3.databaseUrl
   });
   app2.use(
     session({
@@ -269,7 +300,7 @@ async function registerRoutes(app2) {
         pool: pool2,
         createTableIfMissing: true
       }),
-      secret: process.env.SESSION_SECRET || "workforce-secret-key",
+      secret: config3.sessionSecret,
       resave: false,
       saveUninitialized: false,
       cookie: {
@@ -553,26 +584,33 @@ import * as fs from "fs";
 import * as path from "path";
 var app = express();
 var log = console.log;
+var config4 = getConfig();
 function setupCors(app2) {
   app2.use((req, res, next) => {
     const origins = /* @__PURE__ */ new Set();
+    config4.allowedOrigins.forEach((origin2) => origins.add(origin2));
+    if (process.env.ALLOWED_ORIGINS) {
+      process.env.ALLOWED_ORIGINS.split(",").map((d) => d.trim()).filter(Boolean).forEach((d) => origins.add(d));
+    }
     if (process.env.REPLIT_DEV_DOMAIN) {
       origins.add(`https://${process.env.REPLIT_DEV_DOMAIN}`);
     }
     if (process.env.REPLIT_DOMAINS) {
-      process.env.REPLIT_DOMAINS.split(",").forEach((d) => {
-        origins.add(`https://${d.trim()}`);
-      });
+      process.env.REPLIT_DOMAINS.split(",").map((d) => d.trim()).filter(Boolean).forEach((d) => origins.add(`https://${d}`));
     }
     const origin = req.header("origin");
     const isLocalhost = origin?.startsWith("http://localhost:") || origin?.startsWith("http://127.0.0.1:");
-    if (origin && (origins.has(origin) || isLocalhost)) {
+    const isExpoHosted = origin?.endsWith(".expo.app") ?? false;
+    if (origin && (origins.has(origin) || isLocalhost || isExpoHosted)) {
       res.header("Access-Control-Allow-Origin", origin);
       res.header(
         "Access-Control-Allow-Methods",
         "GET, POST, PUT, PATCH, DELETE, OPTIONS"
       );
-      res.header("Access-Control-Allow-Headers", "Content-Type, Cookie");
+      res.header(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Cookie, Authorization, X-Requested-With"
+      );
       res.header("Access-Control-Allow-Credentials", "true");
     }
     if (req.method === "OPTIONS") {
@@ -722,7 +760,7 @@ function setupErrorHandler(app2) {
     const server = await registerRoutes(app);
     console.log("Routes registered successfully");
     setupErrorHandler(app);
-    const port = parseInt(process.env.PORT || "5000", 10);
+    const port = config4.port;
     server.on("error", (error) => {
       if (error.code === "EADDRINUSE") {
         console.error(`Port ${port} is already in use`);
@@ -732,7 +770,7 @@ function setupErrorHandler(app2) {
       process.exit(1);
     });
     server.listen(port, "0.0.0.0", () => {
-      log(`express server serving on port ${port}`);
+      log(`express server serving on port ${port} in ${process.env.NODE_ENV || "development"} mode`);
     });
   } catch (err) {
     console.error("Fatal error starting server:", err);

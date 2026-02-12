@@ -11,9 +11,11 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { eq, and, or, lte, gte, ne, ilike, sql } from "drizzle-orm";
 import pg from "pg";
 import bcrypt from "bcryptjs";
+import { getConfig } from "./config";
 
+const config = getConfig();
 const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: config.databaseUrl,
 });
 
 export const db = drizzle(pool);
@@ -228,7 +230,7 @@ export class DatabaseStorage implements IStorage {
 export const storage = new DatabaseStorage();
 
 export async function seedDatabase() {
-  const existingAdmin = await storage.getUserByUsername("admin");
+  const existingAdmin = await storage.getUserByUsername("admintest");
   if (existingAdmin) return;
 
   console.log("Seeding database with demo accounts...");
